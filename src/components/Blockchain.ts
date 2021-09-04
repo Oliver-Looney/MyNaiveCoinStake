@@ -88,4 +88,6 @@ const addBlockToChain = (newBlock: Block) => {
     return false;
 }
 
-export {getBlockchain, getLatestBlock, isBlockStructureValid, replaceChain, addBlockToChain};
+
+
+export {getBlockchain, getLatestBlock, isBlockStructureValid, replaceChain, addBlockToChain,generateNextBlock};
