@@ -20,7 +20,7 @@ const generateNextBlock = (blockData: string) => {
     return new Block(nextIndex, nextHash, previousBlock.hash, nextTimestamp, blockData);
 }
 
-const blockchain: Block[] = [genesisBlock];
+let blockchain: Block[] = [genesisBlock];
 
 function calculateHashForBlock(blockToGetHashOf: Block) {
     return calculateHash(blockToGetHashOf.index, blockToGetHashOf.previousHash, blockToGetHashOf.timestamp, blockToGetHashOf.data);
@@ -49,18 +49,27 @@ const isBlockStructureValid = (block: Block): boolean => {
         && typeof block.data === "string";
 }
 
-const isValidChain = (blockchainToValidate:Block[]):boolean=>{
-    const isValidGenesis=(block:Block):boolean=>{
-        return JSON.stringify(block)===JSON.stringify(genesisBlock);
+const isValidChain = (blockchainToValidate: Block[]): boolean => {
+    const isValidGenesis = (block: Block): boolean => {
+        return JSON.stringify(block) === JSON.stringify(genesisBlock);
     };
-    if(!isValidGenesis(blockchainToValidate[0])){
+    if (!isValidGenesis(blockchainToValidate[0])) {
         return false;
     }
-    for (let i=0;i<blockchainToValidate.length;i++){
-        if(!isBlockValid(blockchainToValidate[i],blockchainToValidate[i-1])){
+    for (let i = 0; i < blockchainToValidate.length; i++) {
+        if (!isBlockValid(blockchainToValidate[i], blockchainToValidate[i - 1])) {
             return false;
         }
     }
     return true;
 }
 
+const replaceChain = (newBlocks: Block[]) => {
+    if (isValidChain(newBlocks) && newBlocks.length > blockchain.length) {
+        console.log("Received blockchain is valid. Replacing current blockchain with received blockchain");
+        blockchain = newBlocks;
+        //broadcastLatest();
+    } else {
+        console.log("Received blockchain is invalid");
+    }
+};
