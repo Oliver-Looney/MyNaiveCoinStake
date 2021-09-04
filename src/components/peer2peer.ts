@@ -71,3 +71,36 @@ const initMessageHandler = (ws: WebSocket) => {
         }
     });
 };
+
+const write = (ws: WebSocket, message: Message): void => ws.send(JSON.stringify(message));
+
+const broadcast = (message: Message): void => sockets.forEach((socket) => write(socket, message));
+
+const queryChainLengthMsg = (): Message => ({
+    'type': MessageType.QUERY_LATEST,
+    'data': null
+});
+
+const queryAllMsg = (): Message => ({
+    'type': MessageType.QUERY_ALL,
+    'data': null
+});
+
+const responseChainMsg = (): Message => ({
+    'type': MessageType.RESPONSE_BLOCKCHAIN,
+    'data': JSON.stringify(getBlockchain());
+});
+
+const responseLatestMsg = (): Message => ({
+    'type': MessageType.RESPONSE_BLOCKCHAIN,
+    'data': JSON.stringify([getLatestBlock()]);
+});
+
+const initErrorHandler = (ws: WebSocket) => {
+    const closeConnection = (myWs: WebSocket) => {
+        console.log('connection failed to peer: ' + myWs.url);
+        sockets.splice(sockets.indexOf(myWs), 1);
+    };
+    ws.on('close', () => closeConnection(ws));
+    ws.on('error', () => closeConnection(ws));
+}
