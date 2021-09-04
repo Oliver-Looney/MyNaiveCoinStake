@@ -1,5 +1,6 @@
 import {Block} from "./Block";
 import * as CryptoJS from "crypto-js";
+import {broadcastLatest} from "./peer2peer";
 
 function getBlockchain() {
     return blockchain;
@@ -73,10 +74,18 @@ const replaceChain = (newBlocks: Block[]) => {
     if (isValidChain(newBlocks) && newBlocks.length > blockchain.length) {
         console.log("Received blockchain is valid. Replacing current blockchain with received blockchain");
         blockchain = newBlocks;
-        //broadcastLatest();
+        broadcastLatest();
     } else {
         console.log("Received blockchain is invalid");
     }
 };
 
-export {Block, getBlockchain, getLatestBlock, isBlockStructureValid, replaceChain};
+const addBlockToChain = (newBlock: Block) => {
+    if (isBlockValid(newBlock, getLatestBlock())) {
+        blockchain.push(newBlock);
+        return true;
+    }
+    return false;
+}
+
+export {getBlockchain, getLatestBlock, isBlockStructureValid, replaceChain, addBlockToChain};

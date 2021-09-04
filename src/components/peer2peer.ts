@@ -1,8 +1,7 @@
 import * as WebSocket from 'ws';
 import {Server} from 'ws';
-import {Block, getBlockchain, getLatestBlock, isBlockStructureValid, replaceChain} from './blockchain';
-import bodyParser = require("body-parser");
-import {write} from "fs";
+import {addBlockToChain, getBlockchain, getLatestBlock, isBlockStructureValid, replaceChain} from './blockchain';
+import {Block} from "./Block";
 
 const sockets: WebSocket[] = [];
 
@@ -88,12 +87,12 @@ const queryAllMsg = (): Message => ({
 
 const responseChainMsg = (): Message => ({
     'type': MessageType.RESPONSE_BLOCKCHAIN,
-    'data': JSON.stringify(getBlockchain());
+    'data': JSON.stringify(getBlockchain())
 });
 
 const responseLatestMsg = (): Message => ({
     'type': MessageType.RESPONSE_BLOCKCHAIN,
-    'data': JSON.stringify([getLatestBlock()]);
+    'data': JSON.stringify([getLatestBlock()])
 });
 
 const initErrorHandler = (ws: WebSocket) => {
@@ -104,3 +103,49 @@ const initErrorHandler = (ws: WebSocket) => {
     ws.on('close', () => closeConnection(ws));
     ws.on('error', () => closeConnection(ws));
 }
+
+const handleBlockchainResponse = (receivedBlocks: Block[]) => {
+    if (receivedBlocks.length === 0) {
+        console.log('received block chain size of 0');
+        return;
+    }
+    const latestBlockReceived: Block = receivedBlocks[receivedBlocks.length - 1];
+    if (!isBlockStructureValid(latestBlockReceived)) {
+        console.log('block structure not valid');
+        return;
+    }
+    const latestBlockHeld: Block = getLatestBlock();
+    if (latestBlockReceived.index > latestBlockHeld.index) {
+        console.log('blockchain possibly behind. We got: '
+            + latestBlockHeld.index + ' Peer got: ' + latestBlockReceived.index);
+        if (latestBlockHeld.hash === latestBlockReceived.previousHash) {
+            if (addBlockToChain(latestBlockReceived)) {
+                broadcast(responseLatestMsg());
+            }
+        } else if (receivedBlocks.length === 1) {
+            console.log('We have to query the chain from our peer');
+            broadcast(queryAllMsg());
+        } else {
+            console.log('Received blockchain is no longer than current blockchain');
+            replaceChain(receivedBlocks);
+        }
+    } else {
+        console.log('Received blockchain is not longer than received blockchain. Do nothing');
+    }
+};
+
+const broadcastLatest = (): void => {
+    broadcast(responseLatestMsg());
+};
+
+const connectToPeers = (newPeer: string): void => {
+    const ws: WebSocket = new WebSocket(newPeer);
+    ws.on('open', () => {
+        initConnection(ws);
+    });
+    ws.on('error', () => {
+        console.log('connection failed');
+    });
+};
+
+export {connectToPeers, broadcastLatest, initP2PServer, getSockets};
