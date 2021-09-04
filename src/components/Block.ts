@@ -1,12 +1,12 @@
 class Block {
-    public index: string;
+    public index: number;
     public hash: string;
     public previousHash: string;
     public timestamp: number;
     public data: string;
 
 
-    constructor(index: string, hash: string, previousHash: string, timestamp: number, data: string) {
+    constructor(index: number, hash: string, previousHash: string, timestamp: number, data: string) {
         this.index = index;
         this.hash = hash;
         this.previousHash = previousHash;
@@ -14,3 +14,5 @@ class Block {
         this.data = data;
     }
 }
+
+export {Block}
