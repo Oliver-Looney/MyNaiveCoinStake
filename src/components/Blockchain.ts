@@ -1,6 +1,11 @@
 import {Block} from "./Block";
 import * as CryptoJS from "crypto-js";
 
+function getBlockchain() {
+    return blockchain;
+}
+
+
 const calculateHash = (index: number, previousHash: string, timestamp: number, data: string): string =>
     CryptoJS.HmacSHA256(index + previousHash + timestamp + data)
         .toString();
@@ -73,3 +78,5 @@ const replaceChain = (newBlocks: Block[]) => {
         console.log("Received blockchain is invalid");
     }
 };
+
+export {Block, getBlockchain, getLatestBlock, isBlockStructureValid, replaceChain};
