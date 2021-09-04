@@ -34,12 +34,40 @@ const initP2PServer = (p2pPort: number) => {
     console.log('listening websocket p2p port on ' + p2pPort);
 };
 
-const JSONToObject = <T>(data:string):T=>{
-    try{
+const JSONToObject = <T>(data: string): T => {
+    try {
         return JSON.parse(data);
-    } catch (e){
+    } catch (e) {
         console.log(e);
         return null;
     }
 };
 
+const initMessageHandler = (ws: WebSocket) => {
+    ws.on('message', (data: string) => {
+        const message: Message = JSONToObject<Message>(data);
+        if (message === null) {
+            console.log('could not parse received JSON message: ' + data);
+            return;
+        }
+        console.log('Received message ' + JSON.stringify(message));
+        switch (message.type) {
+            case MessageType.QUERY_ALL:
+                write(ws, responseChainMsg());
+                break;
+
+            case MessageType.QUERY_LATEST:
+                write(ws, responseLatestMsg());
+                break;
+            case MessageType.RESPONSE_BLOCKCHAIN:
+                const receivedBlocks: Block[] = JSONToObject<Block[]>(message.data);
+                if (receivedBlocks === null) {
+                    console.log('invalid blocks received:');
+                    console.log(message.data);
+                    break;
+                }
+                handleBlockchainResponse(receivedBlocks);
+                break;
+        }
+    });
+};
