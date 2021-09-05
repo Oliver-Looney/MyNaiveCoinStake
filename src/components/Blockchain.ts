@@ -1,6 +1,7 @@
 import {Block} from "./Block";
 import * as CryptoJS from "crypto-js";
 import {broadcastLatest} from "./peer2peer";
+import {hexToBinary} from "./util";
 
 function getBlockchain() {
     return blockchain;
@@ -18,7 +19,11 @@ function getLatestBlock() {
     return blockchain[blockchain.length - 1];
 }
 
-
+const hashMatchesDifficulty = (hash:string,difficulty:number):boolean=>{
+    const hashInBinary:string=hexToBinary(hash);
+    const requiredPrefix:string="0".repeat(difficulty);
+    return hashInBinary.startsWith(requiredPrefix);
+}
 
 let blockchain: Block[] = [genesisBlock];
 
