@@ -1,22 +1,40 @@
 import {Block} from "./Block";
 import * as CryptoJS from "crypto-js";
 import {broadcastLatest} from "./peer2peer";
+import BigNumber from "bignumber.js";
 
-function getBlockchain() {
-    return blockchain;
-}
+const getBlockchain = (): Block[] => blockchain;
 
 
-const calculateHash = (index: number, previousHash: string, timestamp: number, data: string): string =>
-    CryptoJS.HmacSHA256(index + previousHash + timestamp + data)
+const calculateHash = (index: number, previousHash: string, timestamp: number, data: string,
+                       difficulty: number, minterBalance: number, minterAddress: string): string =>
+    CryptoJS.HmacSHA256(index + previousHash + timestamp + data + difficulty + minterBalance + minterAddress)
         .toString();
 
 const genesisBlock: Block = new Block(
-    0, '816534932c2b7154836da6afc367695e6337db8a921823784c14378abed4f7d7', null, 1465154705, 'genesisBlock');
+    0, '816534932c2b7154836da6afc367695e6337db8a921823784c14378abed4f7d7', null, 1465154705, 'genesisBlock', 0, 0, "04bfcab8722991ae774db48f934ca79cfb7dd991229153b9f732ba5334aafcd8e7266e47076996b55a14bf9913ee3145ce0cfc1372ada8ada74bd287450313534a");
 
-function getLatestBlock() {
-    return blockchain[blockchain.length - 1];
-}
+const getLatestBlock = (): Block => blockchain[blockchain.length - 1];
+
+const mintingWithoutCoinIndex = 5;
+
+
+const isBlockStakingValid = (prevHash: string, address: string, timestamp: number,
+                             balance: number, difficulty: number, index: number): boolean => {
+    difficulty++;
+    //Allow minting without coins for a few blocks
+    if (index <= mintingWithoutCoinIndex) {
+        balance++;
+    }
+    const balanceOverDifficulty = new BigNumber(2)
+        .exponentiatedBy(256)
+        .times(balance)
+        .dividedBy(difficulty);
+    const stakingHash: string = CryptoJS.SHA256(prevHash + address + timestamp);
+    const decimalStakingHash = new BigNumber(stakingHash, 16);
+    const difference = balanceOverDifficulty.minus(decimalStakingHash).toNumber();
+    return difference >= 0;
+};
 
 const generateNextBlock = (blockData: string) => {
     const previousBlock: Block = getLatestBlock();
@@ -89,5 +107,4 @@ const addBlockToChain = (newBlock: Block) => {
 }
 
 
-
-export {getBlockchain, getLatestBlock, isBlockStructureValid, replaceChain, addBlockToChain,generateNextBlock};
+export {getBlockchain, getLatestBlock, isBlockStructureValid, replaceChain, addBlockToChain, generateNextBlock};
