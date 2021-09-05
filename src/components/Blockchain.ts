@@ -12,19 +12,13 @@ const calculateHash = (index: number, previousHash: string, timestamp: number, d
         .toString();
 
 const genesisBlock: Block = new Block(
-    0, '816534932c2b7154836da6afc367695e6337db8a921823784c14378abed4f7d7', null, 1465154705, 'genesisBlock');
+    0, '816534932c2b7154836da6afc367695e6337db8a921823784c14378abed4f7d7', null, 1465154705, 'genesisBlock',0,0);
 
 function getLatestBlock() {
     return blockchain[blockchain.length - 1];
 }
 
-const generateNextBlock = (blockData: string) => {
-    const previousBlock: Block = getLatestBlock();
-    const nextIndex: number = previousBlock.index + 1;
-    const nextTimestamp: number = new Date().getTime() / 1000;
-    const nextHash: string = calculateHash(nextIndex, previousBlock.hash, nextTimestamp, blockData);
-    return new Block(nextIndex, nextHash, previousBlock.hash, nextTimestamp, blockData);
-}
+
 
 let blockchain: Block[] = [genesisBlock];
 
@@ -90,4 +84,4 @@ const addBlockToChain = (newBlock: Block) => {
 
 
 
-export {getBlockchain, getLatestBlock, isBlockStructureValid, replaceChain, addBlockToChain,generateNextBlock};
+export {getBlockchain, getLatestBlock, isBlockStructureValid, replaceChain, addBlockToChain};
