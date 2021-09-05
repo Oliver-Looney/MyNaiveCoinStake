@@ -1,5 +1,5 @@
 import * as express from 'express';
-import bodyParser = require("body-parser");
+import * as bodyParser from 'body-parser';
 import {generateNextBlock, getBlockchain} from "./components/Blockchain";
 import {Block} from "./components/Block";
 import {connectToPeers, getSockets, initP2PServer} from "./components/peer2peer";
@@ -21,12 +21,12 @@ const initHttpServer = (myHttpPort: number) => {
     app.get('/peers', (req, res) => {
         res.send(getSockets().map((s: any) => s._socket.remoteAddress + ':' + s._socket.remotePort));
     });
-    app.post('/addPeer',(req,res)=>{
-       connectToPeers(req.body.peer);
-       res.send();
+    app.post('/addPeer', (req, res) => {
+        connectToPeers(req.body.peer);
+        res.send();
     });
-    app.listen(myHttpPort,()=>{
-        console.log('Listening http on port: '+myHttpPort);
+    app.listen(myHttpPort, () => {
+        console.log('Listening http on port: ' + myHttpPort);
     });
 };
 
