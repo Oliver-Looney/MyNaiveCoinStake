@@ -7,28 +7,39 @@ function getBlockchain() {
     return blockchain;
 }
 
+const findBlock = (index: number, previousHash: string, timestamp: number, data: string, difficulty: number): Block => {
+    let nonce = 0;
+    while (true) {
+        const hash = calculateHash(index, previousHash, timestamp, data, difficulty, nonce);
+        if (hashMatchesDifficulty(hash,difficulty)){
+            return new Block(index,hash,previousHash,timestamp,data,difficulty,nonce);
+        }
+        nonce++;
+    }
+}
 
-const calculateHash = (index: number, previousHash: string, timestamp: number, data: string): string =>
-    CryptoJS.HmacSHA256(index + previousHash + timestamp + data)
+const calculateHash = (index: number, previousHash: string, timestamp: number, data: string, difficulty: number, nonce: number): string =>
+    CryptoJS.HmacSHA256(index + previousHash + timestamp + data + difficulty + nonce)
         .toString();
 
 const genesisBlock: Block = new Block(
-    0, '816534932c2b7154836da6afc367695e6337db8a921823784c14378abed4f7d7', null, 1465154705, 'genesisBlock',0,0);
+    0, '816534932c2b7154836da6afc367695e6337db8a921823784c14378abed4f7d7', null, 1465154705, 'genesisBlock', 0, 0);
 
 function getLatestBlock() {
     return blockchain[blockchain.length - 1];
 }
 
-const hashMatchesDifficulty = (hash:string,difficulty:number):boolean=>{
-    const hashInBinary:string=hexToBinary(hash);
-    const requiredPrefix:string="0".repeat(difficulty);
+
+const hashMatchesDifficulty = (hash: string, difficulty: number): boolean => {
+    const hashInBinary: string = hexToBinary(hash);
+    const requiredPrefix: string = "0".repeat(difficulty);
     return hashInBinary.startsWith(requiredPrefix);
 }
 
 let blockchain: Block[] = [genesisBlock];
 
 function calculateHashForBlock(blockToGetHashOf: Block) {
-    return calculateHash(blockToGetHashOf.index, blockToGetHashOf.previousHash, blockToGetHashOf.timestamp, blockToGetHashOf.data);
+    return calculateHash(blockToGetHashOf.index, blockToGetHashOf.previousHash, blockToGetHashOf.timestamp, blockToGetHashOf.data, blockToGetHashOf.difficulty,blockToGetHashOf.nonce);
 }
 
 const isBlockValid = (newBlock: Block, previousBlock: Block) => {
@@ -86,7 +97,6 @@ const addBlockToChain = (newBlock: Block) => {
     }
     return false;
 }
-
 
 
 export {getBlockchain, getLatestBlock, isBlockStructureValid, replaceChain, addBlockToChain};
