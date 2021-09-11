@@ -7,12 +7,39 @@ function getBlockchain() {
     return blockchain;
 }
 
+//in seconds
+const BLOCK_GENERATION_INTERVAL: number = 10;
+//in blocks
+const DIFFICULTY_ADJUSTMENT_INTERVAL: number = 10;
+
+const getDifficulty = (aBlockchain: Block[]): number => {
+    const latestBlock: Block = aBlockchain[blockchain.length - 1];
+    if (latestBlock.index % DIFFICULTY_ADJUSTMENT_INTERVAL === 0 && latestBlock.index !== 0) {
+        return getAdjustedDifficulty(latestBlock, aBlockchain);
+    } else {
+        return latestBlock.difficulty;
+    }
+};
+
+const getAdjustedDifficulty = (latestBlock: Block, aBlockchain: Block[]) => {
+    const prevAdjustmentBlock: Block = aBlockchain[blockchain.length - DIFFICULTY_ADJUSTMENT_INTERVAL];
+    const timeExpected: number = BLOCK_GENERATION_INTERVAL * DIFFICULTY_ADJUSTMENT_INTERVAL;
+    const timeTaken: number = latestBlock.timestamp = prevAdjustmentBlock.timestamp;
+    if (timeTaken < timeExpected / 2) {
+        return prevAdjustmentBlock.difficulty + 1;
+    } else if (timeTaken > timeExpected * 2) {
+        return prevAdjustmentBlock.difficulty - 1;
+    } else {
+        return prevAdjustmentBlock.difficulty;
+    }
+}
+
 const findBlock = (index: number, previousHash: string, timestamp: number, data: string, difficulty: number): Block => {
     let nonce = 0;
     while (true) {
         const hash = calculateHash(index, previousHash, timestamp, data, difficulty, nonce);
-        if (hashMatchesDifficulty(hash,difficulty)){
-            return new Block(index,hash,previousHash,timestamp,data,difficulty,nonce);
+        if (hashMatchesDifficulty(hash, difficulty)) {
+            return new Block(index, hash, previousHash, timestamp, data, difficulty, nonce);
         }
         nonce++;
     }
@@ -39,7 +66,7 @@ const hashMatchesDifficulty = (hash: string, difficulty: number): boolean => {
 let blockchain: Block[] = [genesisBlock];
 
 function calculateHashForBlock(blockToGetHashOf: Block) {
-    return calculateHash(blockToGetHashOf.index, blockToGetHashOf.previousHash, blockToGetHashOf.timestamp, blockToGetHashOf.data, blockToGetHashOf.difficulty,blockToGetHashOf.nonce);
+    return calculateHash(blockToGetHashOf.index, blockToGetHashOf.previousHash, blockToGetHashOf.timestamp, blockToGetHashOf.data, blockToGetHashOf.difficulty, blockToGetHashOf.nonce);
 }
 
 const isBlockValid = (newBlock: Block, previousBlock: Block) => {
