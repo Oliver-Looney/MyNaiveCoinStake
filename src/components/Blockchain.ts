@@ -34,6 +34,15 @@ const getAdjustedDifficulty = (latestBlock: Block, aBlockchain: Block[]) => {
     }
 }
 
+function getCurrentTimeStamp() {
+    return Math.round(new Date().getTime() / 1000);
+}
+
+const isValidTimeStamp = (newBlock: Block, previousBlock: Block): boolean => {
+    return (previousBlock.timestamp - 60 < newBlock.timestamp)
+        && newBlock.timestamp - 60 < getCurrentTimeStamp();
+}
+
 const findBlock = (index: number, previousHash: string, timestamp: number, data: string, difficulty: number): Block => {
     let nonce = 0;
     while (true) {
