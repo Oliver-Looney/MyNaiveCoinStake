@@ -1,35 +1,81 @@
 import {Block} from "./Block";
 import * as CryptoJS from "crypto-js";
 import {broadcastLatest} from "./peer2peer";
+import {hexToBinary} from "./util";
 
 function getBlockchain() {
     return blockchain;
 }
 
+//in seconds
+const BLOCK_GENERATION_INTERVAL: number = 10;
+//in blocks
+const DIFFICULTY_ADJUSTMENT_INTERVAL: number = 10;
 
-const calculateHash = (index: number, previousHash: string, timestamp: number, data: string): string =>
-    CryptoJS.HmacSHA256(index + previousHash + timestamp + data)
+const getDifficulty = (aBlockchain: Block[]): number => {
+    const latestBlock: Block = aBlockchain[blockchain.length - 1];
+    if (latestBlock.index % DIFFICULTY_ADJUSTMENT_INTERVAL === 0 && latestBlock.index !== 0) {
+        return getAdjustedDifficulty(latestBlock, aBlockchain);
+    } else {
+        return latestBlock.difficulty;
+    }
+};
+
+const getAdjustedDifficulty = (latestBlock: Block, aBlockchain: Block[]) => {
+    const prevAdjustmentBlock: Block = aBlockchain[blockchain.length - DIFFICULTY_ADJUSTMENT_INTERVAL];
+    const timeExpected: number = BLOCK_GENERATION_INTERVAL * DIFFICULTY_ADJUSTMENT_INTERVAL;
+    const timeTaken: number = latestBlock.timestamp = prevAdjustmentBlock.timestamp;
+    if (timeTaken < timeExpected / 2) {
+        return prevAdjustmentBlock.difficulty + 1;
+    } else if (timeTaken > timeExpected * 2) {
+        return prevAdjustmentBlock.difficulty - 1;
+    } else {
+        return prevAdjustmentBlock.difficulty;
+    }
+}
+
+function getCurrentTimeStamp() {
+    return Math.round(new Date().getTime() / 1000);
+}
+
+const isValidTimeStamp = (newBlock: Block, previousBlock: Block): boolean => {
+    return (previousBlock.timestamp - 60 < newBlock.timestamp)
+        && newBlock.timestamp - 60 < getCurrentTimeStamp();
+}
+
+const findBlock = (index: number, previousHash: string, timestamp: number, data: string, difficulty: number): Block => {
+    let nonce = 0;
+    while (true) {
+        const hash = calculateHash(index, previousHash, timestamp, data, difficulty, nonce);
+        if (hashMatchesDifficulty(hash, difficulty)) {
+            return new Block(index, hash, previousHash, timestamp, data, difficulty, nonce);
+        }
+        nonce++;
+    }
+}
+
+const calculateHash = (index: number, previousHash: string, timestamp: number, data: string, difficulty: number, nonce: number): string =>
+    CryptoJS.HmacSHA256(index + previousHash + timestamp + data + difficulty + nonce)
         .toString();
 
 const genesisBlock: Block = new Block(
-    0, '816534932c2b7154836da6afc367695e6337db8a921823784c14378abed4f7d7', null, 1465154705, 'genesisBlock');
+    0, '816534932c2b7154836da6afc367695e6337db8a921823784c14378abed4f7d7', null, 1465154705, 'genesisBlock', 0, 0);
 
 function getLatestBlock() {
     return blockchain[blockchain.length - 1];
 }
 
-const generateNextBlock = (blockData: string) => {
-    const previousBlock: Block = getLatestBlock();
-    const nextIndex: number = previousBlock.index + 1;
-    const nextTimestamp: number = new Date().getTime() / 1000;
-    const nextHash: string = calculateHash(nextIndex, previousBlock.hash, nextTimestamp, blockData);
-    return new Block(nextIndex, nextHash, previousBlock.hash, nextTimestamp, blockData);
+
+const hashMatchesDifficulty = (hash: string, difficulty: number): boolean => {
+    const hashInBinary: string = hexToBinary(hash);
+    const requiredPrefix: string = "0".repeat(difficulty);
+    return hashInBinary.startsWith(requiredPrefix);
 }
 
 let blockchain: Block[] = [genesisBlock];
 
 function calculateHashForBlock(blockToGetHashOf: Block) {
-    return calculateHash(blockToGetHashOf.index, blockToGetHashOf.previousHash, blockToGetHashOf.timestamp, blockToGetHashOf.data);
+    return calculateHash(blockToGetHashOf.index, blockToGetHashOf.previousHash, blockToGetHashOf.timestamp, blockToGetHashOf.data, blockToGetHashOf.difficulty, blockToGetHashOf.nonce);
 }
 
 const isBlockValid = (newBlock: Block, previousBlock: Block) => {
@@ -89,5 +135,4 @@ const addBlockToChain = (newBlock: Block) => {
 }
 
 
-
-export {getBlockchain, getLatestBlock, isBlockStructureValid, replaceChain, addBlockToChain,generateNextBlock};
+export {getBlockchain, getLatestBlock, isBlockStructureValid, replaceChain, addBlockToChain};
